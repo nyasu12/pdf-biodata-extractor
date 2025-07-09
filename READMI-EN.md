@@ -21,7 +21,7 @@ C:
 │    └── GodmodePy  
 │        ├── bio_data\         # Place your PDF files here (a shortcut is automatically created on the desktop)  
 │        ├── output\           # Extracted results will be saved here  
-│        │   └── debug\        # Debug images from OCR (optional)  
+│        └── debug\        # Debug images from OCR (optional)  
 
 C:\Program Files\GodmodePyInstaller\
 ├── godmode.py               # Main script to run  
