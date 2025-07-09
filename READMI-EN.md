@@ -18,18 +18,18 @@ This tool extracts structured personal information from **scanned biodata PDF fi
 
 C:  
 └── temp  
-    └── GodmodePy  
-        ├── bio_data\         # Place your PDF files here (a shortcut is automatically created on the desktop)  
-        ├── output\           # Extracted results will be saved here  
-        │   └── debug\        # Debug images from OCR (optional)  
+│    └── GodmodePy  
+│        ├── bio_data\         # Place your PDF files here (a shortcut is automatically created on the desktop)  
+│        ├── output\           # Extracted results will be saved here  
+│        │   └── debug\        # Debug images from OCR (optional)  
 
 C:\Program Files\GodmodePyInstaller\
 ├── godmode.py               # Main script to run  
 └── modules\                 # Supporting logic modules  
-    ├── config_loader.py  
-    ├── excel_module.py  
-    ├── gpt_module.py  
-    └── ocr_module.py  
+│    ├── config_loader.py  
+│    ├── excel_module.py  
+│    ├── gpt_module.py  
+│    └── ocr_module.py  
 
 
 ## 🚀 How to Use
