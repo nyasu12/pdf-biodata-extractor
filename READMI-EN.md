@@ -14,7 +14,22 @@ This tool extracts structured personal information from **scanned biodata PDF fi
 - Outputs to Excel with clean formatting
 - Supports Japanese + English documents
 
-## 📁 Folder Structure
+## 📁 Directory Structure
+
+C:  
+└── temp  
+    └── GodmodePy  
+        ├── bio_data\         # Place your PDF files here (a shortcut is automatically created on the desktop)  
+        ├── output\           # Extracted results will be saved here  
+        │   └── debug\        # Debug images from OCR (optional)  
+
+C:\Program Files\GodmodePyInstaller\
+├── godmode.py               # Main script to run  
+└── modules\                 # Supporting logic modules  
+    ├── config_loader.py  
+    ├── excel_module.py  
+    ├── gpt_module.py  
+    └── ocr_module.py  
 
 
 ## 🚀 How to Use
@@ -53,15 +68,36 @@ This project includes an installer(https://github.com/nyasu12/pdf-biodata-extrac
 
 ## 📝 License
 
-MIT License (or specify another if needed)
+MIT License 
 
 ---
 
 ## 🤖 Sample Use Cases
 
-- Extracting bio-data for visa processing
-- Automating passport + employment info parsing
-- Translating official documents via prompt customization
+- Extracting personal data from scanned biodata documents for administrative processing  
+- Automating the extraction of passport and employment information  
+- Translating official documents (e.g., family registers, birth certificates, resident records) into English using prompt customization  
+- **Extending the tool to support other document types via prompt and Excel logic customization**
+
+---
+
+### ⚠️ Using this tool for other document formats?
+
+To extract data from other types of documents (e.g., family registers or certificates), you must modify:
+
+1. The **GPT prompt** (in `gpt_module.py`) to reflect the new fields and structure  
+2. The **Excel export logic** (in `excel_module.py`) to match the new field layout  
+
+> 📝 *Changing only the GPT prompt may result in Excel column mismatches or malformed output.*
+
+---
+
+### 📝 Optional: Word Output Support
+
+Although this tool currently exports to Excel by default, it can be extended to generate **Word (.docx)** output using [`python-docx`](https://python-docx.readthedocs.io/).  
+This may be useful when formatting or layout is more important than structured tabular data.
+
+
 
 ---
 
