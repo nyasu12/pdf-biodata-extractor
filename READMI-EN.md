@@ -45,7 +45,7 @@ This tool extracts structured personal information from **scanned biodata PDF fi
 
 ## 📦 Installer
 
-This project includes an installer built with Inno Setup. It installs:
+This project includes an installer(https://github.com/nyasu12/pdf-biodata-extractor/releases/tag/v1.0.0) built with Inno Setup. It installs:
 - Required folders
 - Poppler binaries
 - Google Vision key setup
