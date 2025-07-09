@@ -65,4 +65,4 @@ MIT License (or specify another if needed)
 
 ---
 
-Let me know if you want a Japanese version too! 😊
+
