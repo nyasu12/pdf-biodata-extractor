@@ -4,7 +4,7 @@ chcp 65001 >nul
 
 echo Pythonライブラリをインストールしています...
 
-:: PythonがシステムPATHにあるか確認
+
 where python >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo エラー: Pythonが見つかりません。Pythonがインストールされているか、システムPATHに追加されているか確認してください。
@@ -13,13 +13,13 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-:: Pythonのバージョンを確認
+
 python --version | findstr "3.13" >nul
 if %ERRORLEVEL% neq 0 (
     echo 警告: Python 3.13が必要です。現在のバージョンが異なる場合、動作しない可能性があります。
 )
 
-:: ライブラリをインストール
+
 echo pandasをインストールしています...
 python -m pip install pandas
 if %ERRORLEVEL% neq 0 (
