@@ -2,7 +2,6 @@
 AppName=GodmodePyInstaller
 AppVersion=1.00
 AppPublisher=Shota Shimaki
-; 64ビットのProgram Filesにインストール
 DefaultDirName={autopf64}\GodmodePyInstaller
 DefaultGroupName=GodmodePyInstaller
 OutputDir=C:\InstallerOutput
@@ -13,15 +12,11 @@ WizardStyle=modern
 Uninstallable=yes
 UninstallDisplayName=GodmodePyInstaller Uninstaller
 UninstallFilesDir={app}
-; 64ビット互換アーキテクチャを指定（警告解消）
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Files]
-; PopplerのバイナリをC:\Program Files\Poppler\binに配置
 Source: "C:\InstallerFiles\poppler-24.08.0\Library\bin\*"; DestDir: "C:\Program Files\Poppler\bin"; Flags: recursesubdirs createallsubdirs
-; Credentialsを{app}\Credentialsに配置
 Source: "C:\InstallerFiles\vision-api-key.json"; DestDir: "{app}\Credentials"
-; godmode.pyを{app}に配置
 Source: "C:\InstallerFiles\godmode.py"; DestDir: "{app}"
 Source: "C:\InstallerFiles\install_libraries.bat"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
@@ -37,11 +32,8 @@ Name: "{app}\Credentials"; Flags: uninsneveruninstall
 Name: "{autodesktop}\bio_data - Shortcut"; Filename: "C:\temp\GodmodePy\bio_data"; Comment: "Place PDF files here for godmode.py"
 
 [Run]
-; 新しいPopplerパスをPATHに追加
 Filename: "cmd.exe"; Parameters: "/c setx PATH ""C:\Program Files\Poppler\bin;%PATH%"" /M"; StatusMsg: "Setting Poppler PATH..."; Flags: runhidden waituntilterminated
-; Google Cloudの認証情報を設定
 Filename: "cmd.exe"; Parameters: "/c setx GOOGLE_APPLICATION_CREDENTIALS ""{app}\Credentials\vision-api-key.json"" /M"; StatusMsg: "Setting Google Cloud credentials..."; Flags: runhidden waituntilterminated
-; ライブラリインストール用のバッチファイルを実行
 Filename: "{tmp}\install_libraries.bat"; StatusMsg: "Installing Python libraries..."; Flags: waituntilterminated
 
 [UninstallDelete]
