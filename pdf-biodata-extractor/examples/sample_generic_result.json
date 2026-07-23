@@ -1,0 +1,24 @@
+{
+  "full_name": "ALEX EXAMPLE",
+  "date_of_birth": "JANUARY 2, 1990",
+  "place_of_birth": "EXAMPLE CITY",
+  "present_address": "123 SAMPLE STREET, EXAMPLE CITY",
+  "nationality": "EXAMPLELAND",
+  "passport_number": "EX123456",
+  "valid_until": "DECEMBER 31, 2030",
+  "category": "ENGINEER",
+  "employment_history": [
+    {
+      "country": "EXAMPLELAND",
+      "employer": "EXAMPLE WORKS LTD.",
+      "start_date": "MARCH 1, 2020",
+      "end_date": "APRIL 1, 2022"
+    },
+    {
+      "country": "OTHERLAND",
+      "employer": "SAMPLE SYSTEMS INC.",
+      "start_date": "MAY 10, 2022",
+      "end_date": "JUNE 30, 2025"
+    }
+  ]
+}
