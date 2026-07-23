@@ -1,0 +1,83 @@
+{
+  "name": "Generic BioData",
+  "description": "General-purpose biodata/resume profile with configurable fields and country-neutral employment output.",
+  "page_detection": {
+    "headers": [
+      "BIO DATA",
+      "BIODATA",
+      "BIOGRAPHICAL DATA",
+      "PERSONAL INFORMATION",
+      "APPLICANT PROFILE"
+    ],
+    "ocr_replacements": {
+      "BL0": "BIO",
+      "BLO": "BIO",
+      "8IO": "BIO",
+      "BI0": "BIO"
+    },
+    "start_rules": [
+      [
+        ["SURNAME", "FULL NAME", "NAME"],
+        ["DATE OF BIRTH", "BIRTH DATE"],
+        ["ADDRESS", "PASSPORT", "NATIONALITY"]
+      ]
+    ]
+  },
+  "extraction": {
+    "system_prompt": "You accurately extract structured information from biodata and resume-like documents. Return only valid JSON without explanations.",
+    "fields": [
+      {"key": "full_name", "label": "Full Name", "description": "The person's complete name as written in the document."},
+      {"key": "date_of_birth", "label": "Date of Birth", "description": "Date of birth."},
+      {"key": "place_of_birth", "label": "Place of Birth", "description": "Place of birth."},
+      {"key": "present_address", "label": "Present Address", "description": "Current/present address."},
+      {"key": "nationality", "label": "Nationality", "description": "Nationality/citizenship when present."},
+      {"key": "passport_number", "label": "Passport Number", "description": "Passport number when present."},
+      {"key": "valid_until", "label": "Valid Until", "description": "Passport expiry/valid-until date when present."},
+      {"key": "category", "label": "Category / Occupation", "description": "Occupation, job category, profession, or role when present."}
+    ],
+    "employment": {
+      "enabled": true,
+      "key": "employment_history",
+      "object_fields": ["country", "employer", "start_date", "end_date"],
+      "instructions": [
+        "Extract every clearly identifiable employment record.",
+        "Use the country explicitly written for each record; leave country empty when it cannot be determined.",
+        "Extract the employer/company/venue name into employer when present.",
+        "Extract start and end dates separately and preserve the source date wording.",
+        "Return records from oldest to newest when the order can be determined."
+      ]
+    },
+    "general_instructions": [
+      "Correct obvious OCR confusions only when context makes the intended value clear.",
+      "Do not invent missing values.",
+      "Keep source date wording; Excel date normalization is handled later."
+    ]
+  },
+  "excel": {
+    "sheet_name": "Extracted Data",
+    "freeze_panes": "A2",
+    "row_height": 25,
+    "columns": [
+      {"source": "full_name", "header": "Full Name", "width": 40},
+      {"source": "date_of_birth", "header": "Date of Birth", "width": 20, "format": "date"},
+      {"source": "place_of_birth", "header": "Place of Birth", "width": 30},
+      {"source": "present_address", "header": "Present Address", "width": 45},
+      {"source": "nationality", "header": "Nationality", "width": 20},
+      {"source": "passport_number", "header": "Passport Number", "width": 20},
+      {"source": "valid_until", "header": "Valid Until", "width": 20, "format": "date"},
+      {"source": "category", "header": "Category / Occupation", "width": 25}
+    ],
+    "repeat_sections": [
+      {
+        "source": "employment_history",
+        "sort_by": "start_date",
+        "fields": [
+          {"source": "country", "header": "Employment Country {index}", "width": 20},
+          {"source": "employer", "header": "Employer {index}", "width": 30},
+          {"source": "start_date", "header": "Employment Start {index}", "width": 20, "format": "date"},
+          {"source": "end_date", "header": "Employment End {index}", "width": 20, "format": "date"}
+        ]
+      }
+    ]
+  }
+}
