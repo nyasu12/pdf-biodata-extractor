@@ -1,0 +1,21 @@
+{
+  "OPENAI_API_KEY": "sk-...",
+  "OPENAI_MODEL": "gpt-5-mini",
+  "PROFILE": "entertainer_jp",
+  "VISION_CREDENTIALS": "vision-api-key.json",
+
+  "BASE_DIR": "./data",
+  "INPUT_FOLDER": "bio_data",
+  "OUTPUT_FOLDER": "output",
+  "DEBUG_FOLDER": "debug",
+  "OUTPUT_FILE": "combined_extracted_data.xlsx",
+
+  "DPI": 800,
+  "DEBUG_ENABLED": true,
+  "OCR": {
+    "language_hints": ["en"],
+    "grayscale": true,
+    "contrast": 1.5,
+    "sharpen": true
+  }
+}
