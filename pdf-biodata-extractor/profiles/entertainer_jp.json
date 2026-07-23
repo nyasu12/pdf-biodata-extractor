@@ -1,0 +1,104 @@
+{
+  "name": "Japan Entertainer BioData",
+  "description": "Backward-compatible profile optimized for Philippines-to-Japan entertainer biodata documents.",
+  "page_detection": {
+    "headers": [
+      "BIO DATA",
+      "BIODATA",
+      "BIO DATA SHEET",
+      "BIOGRAPHICAL DATA"
+    ],
+    "ocr_replacements": {
+      "BL0": "BIO",
+      "BLO": "BIO",
+      "8IO": "BIO",
+      "BI0": "BIO",
+      "IIO": "BIO"
+    },
+    "start_rules": [
+      [
+        ["SURNAME"],
+        ["GIVEN NAME", "GIVEN NAMES", "FIRST NAME"],
+        ["DATE OF BIRTH", "BIRTH DATE"],
+        ["PLACE OF BIRTH", "PASSPORT"]
+      ],
+      [
+        ["SURNAME"],
+        ["GIVEN NAME", "GIVEN NAMES", "FIRST NAME"],
+        ["PRESENT ADDRESS", "ADDRESS"],
+        ["CATEGORY", "PASSPORT"]
+      ]
+    ]
+  },
+  "extraction": {
+    "system_prompt": "You accurately extract structured information from biodata documents. Return only valid JSON without explanations.",
+    "fields": [
+      {"key": "surname", "label": "Surname", "description": "Surname/family name from the surname field."},
+      {"key": "given_names", "label": "Given Names", "description": "All names written in the given name(s) or first name field."},
+      {"key": "middle_name", "label": "Middle Name", "description": "Middle name exactly as written; empty string if absent."},
+      {"key": "date_of_birth", "label": "Date of Birth", "description": "Date of birth."},
+      {"key": "place_of_birth", "label": "Place of Birth", "description": "Place of birth."},
+      {"key": "present_address", "label": "Present Address", "description": "Current/present address."},
+      {"key": "passport_number", "label": "Passport Number", "description": "Passport number."},
+      {"key": "valid_until", "label": "Valid Until", "description": "Passport validity/expiry date."},
+      {"key": "category", "label": "Category", "description": "Category/occupation as written in the document."}
+    ],
+    "full_name": {
+      "target": "full_name",
+      "parts": ["surname", "given_names", "middle_name"],
+      "separator": "  ",
+      "preserve_empty_parts": true
+    },
+    "category_field": "category",
+    "category_map": {
+      "DANCER": "舞踏",
+      "SINGER": "歌謡"
+    },
+    "employment": {
+      "enabled": true,
+      "key": "employment_history",
+      "object_fields": ["country", "start_date", "end_date"],
+      "instructions": [
+        "Extract every employment record from sections such as Employment Records.",
+        "For employment in Japan, set country exactly to \"Japan\". Use the address, country name, Japanese prefecture names, or Japanese city names as evidence.",
+        "For every non-Japan employment record, set country exactly to \"Philippines\" for this profile.",
+        "Extract only the employment period dates into start_date and end_date; do not include employer names in date fields.",
+        "Preserve the source English date wording such as MAY 8, 2016 or July 3, 2024.",
+        "Return records from oldest to newest when the order can be determined."
+      ]
+    },
+    "general_instructions": [
+      "Correct obvious OCR confusions such as 0/O, 1/I, and 8/B when context makes the intended value clear.",
+      "Do not invent values that are not supported by the document.",
+      "Keep source date wording; Excel formatting is handled later by the program."
+    ]
+  },
+  "excel": {
+    "sheet_name": "Extracted Data",
+    "freeze_panes": "A2",
+    "row_height": 25,
+    "columns": [
+      {"source": "full_name", "header": "Full Name", "width": 40},
+      {"source": "date_of_birth", "header": "Date of Birth", "width": 20, "format": "date"},
+      {"source": "passport_number", "header": "Passport Number", "width": 20},
+      {"source": "place_of_birth", "header": "Place of Birth", "width": 30},
+      {"source": "present_address", "header": "Present Address", "width": 45},
+      {"source": "valid_until", "header": "Valid Until", "width": 20, "format": "date"},
+      {"source": "category", "header": "Category", "width": 20},
+      {"source": "employment_count", "country": "Japan", "header": "Japan Entry Count", "width": 10},
+      {"source": "employment_latest_start", "country": "Japan", "header": "Japan Work Period Start", "width": 25, "format": "date"},
+      {"source": "employment_latest_end", "country": "Japan", "header": "Japan Work Period End", "width": 25, "format": "date"}
+    ],
+    "repeat_sections": [
+      {
+        "source": "employment_history",
+        "filter": {"not_country": "Japan"},
+        "sort_by": "start_date",
+        "fields": [
+          {"source": "start_date", "header": "Philippines Work Period Start {index}", "width": 25, "format": "date"},
+          {"source": "end_date", "header": "Philippines Work Period End {index}", "width": 25, "format": "date"}
+        ]
+      }
+    ]
+  }
+}
