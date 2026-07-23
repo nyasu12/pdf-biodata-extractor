@@ -55,6 +55,7 @@ repository-root/
     ├── tests/
     │   ├── test_document_detector.py
     │   ├── test_excel_output.py
+    │   ├── test_gpt_postprocess.py
     │   └── test_profiles.py
     └── modules/
         ├── config_loader.py
@@ -152,7 +153,7 @@ Relative paths in `config.json` are resolved from their logical parent directory
 
 ### `entertainer_jp`
 
-Optimized for the original entertainer biodata workflow and selected by default. The automated regression tests preserve the existing Excel output contract, including Japan entry count/latest work period, dynamic Philippines work-period columns, and date normalization.
+Optimized for the original entertainer biodata workflow and selected by default. The automated regression tests preserve the existing Excel output contract, including Japan entry count/latest work period, dynamic Philippines work-period columns, category mapping, name formatting, and date normalization.
 
 ### `generic_biodata`
 
@@ -369,6 +370,8 @@ The test suite does not require real OpenAI or Google Cloud credentials. It test
 - configurable person/page detection
 - OCR-tolerant BIO DATA header detection
 - multiple-person text splitting
+- category mapping and full-name postprocessing
+- structured employment-record normalization
 - `Oct. 20, 2010` date normalization
 - backward-compatible entertainer Excel columns
 - Japan entry count and latest Japan work period
@@ -400,7 +403,7 @@ The original source text is kept during extraction and normalized only when an E
 - OCR accuracy depends on scan resolution, contrast, orientation, handwriting, compression, and source-document quality.
 - Documents with substantially different headings, languages, table structures, or employment-history formats may need profile adjustments.
 - OpenAI extraction is probabilistic. Review extracted data before using it for decisions, records, or other workflows where mistakes matter.
-- The automated tests validate the local parsing, profile, and Excel-output layers; they do not make live Google Cloud Vision or OpenAI API calls.
+- The automated tests validate the local parsing, profile, postprocessing, and Excel-output layers; they do not make live Google Cloud Vision or OpenAI API calls.
 - The `entertainer_jp` profile is the compatibility-focused profile for the original workflow and is more specifically tuned than `generic_biodata`.
 
 ## Security
