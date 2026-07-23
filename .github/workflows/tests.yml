@@ -7,6 +7,7 @@ on:
       - "pdf-biodata-extractor/**"
       - ".github/workflows/tests.yml"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "pdf-biodata-extractor/**"
       - ".github/workflows/tests.yml"
