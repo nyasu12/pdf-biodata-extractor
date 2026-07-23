@@ -1,6 +1,6 @@
-openai
-google-cloud-vision
-pdf2image
-Pillow
-pandas
-openpyxl
+openai>=2.0,<3.0
+google-cloud-vision>=3.10,<4.0
+pdf2image>=1.17,<2.0
+Pillow>=10.0,<13.0
+pandas>=2.2,<4.0
+openpyxl>=3.1,<4.0
