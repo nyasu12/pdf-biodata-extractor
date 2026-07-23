@@ -1,0 +1,14 @@
+**/__pycache__/
+**/*.py[cod]
+**/*.log
+
+**/Credentials/config.json
+**/Credentials/vision-api-key.json
+
+pdf-biodata-extractor/build/
+pdf-biodata-extractor/dist/
+pdf-biodata-extractor/installer_output/
+pdf-biodata-extractor/*.spec
+
+pdf-biodata-extractor/data/
+pdf-biodata-extractor/output/
