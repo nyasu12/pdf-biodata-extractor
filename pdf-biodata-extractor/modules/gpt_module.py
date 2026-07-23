@@ -1,127 +1,218 @@
-import re
 import json
+import re
+from typing import Any, Dict, List
+
 from openai import OpenAI
 
 
-def extract_fields_with_gpt(ocr_text, api_key, model="gpt-5-mini"):
+def _empty_result(profile: Dict[str, Any]) -> Dict[str, Any]:
+    extraction = profile.get("extraction", {}) or {}
+    result = {}
+    for field in extraction.get("fields", []) or []:
+        key = field.get("key")
+        if key:
+            result[key] = ""
+
+    employment = extraction.get("employment", {}) or {}
+    if employment.get("enabled", False):
+        result[employment.get("key", "employment_history")] = []
+
+    return _postprocess_result(result, profile)
+
+
+def _json_example(profile: Dict[str, Any]) -> Dict[str, Any]:
+    extraction = profile.get("extraction", {}) or {}
+    example = {}
+
+    for field in extraction.get("fields", []) or []:
+        key = field.get("key")
+        if key:
+            example[key] = ""
+
+    employment = extraction.get("employment", {}) or {}
+    if employment.get("enabled", False):
+        object_fields = employment.get("object_fields") or ["country", "start_date", "end_date"]
+        example[employment.get("key", "employment_history")] = [
+            {field: "" for field in object_fields}
+        ]
+
+    return example
+
+
+def _build_prompt(ocr_text: str, profile: Dict[str, Any]) -> str:
+    extraction = profile.get("extraction", {}) or {}
+    lines: List[str] = []
+    lines.append("Extract structured information from the OCR text below.")
+    lines.append("")
+    lines.append("Fields:")
+
+    for field in extraction.get("fields", []) or []:
+        key = field.get("key", "")
+        label = field.get("label", key)
+        description = field.get("description", "")
+        lines.append(f'- "{key}" ({label}): {description}'.rstrip())
+
+    employment = extraction.get("employment", {}) or {}
+    if employment.get("enabled", False):
+        key = employment.get("key", "employment_history")
+        object_fields = employment.get("object_fields") or ["country", "start_date", "end_date"]
+        lines.append("")
+        lines.append(f'Employment records must be returned in "{key}" as a JSON array.')
+        lines.append("Each item must contain: " + ", ".join(f'"{f}"' for f in object_fields) + ".")
+        for instruction in employment.get("instructions", []) or []:
+            lines.append(f"- {instruction}")
+
+    category_map = extraction.get("category_map", {}) or {}
+    if category_map:
+        lines.append("")
+        lines.append("Category values may be returned as written in the source; the program applies configured category mapping after extraction.")
+
+    instructions = extraction.get("general_instructions", []) or []
+    if instructions:
+        lines.append("")
+        lines.append("Rules:")
+        for instruction in instructions:
+            lines.append(f"- {instruction}")
+
+    lines.append("")
+    lines.append("Return only one valid JSON object. Do not add explanations or Markdown code fences.")
+    lines.append("Use empty strings for missing scalar fields and [] when there are no employment records.")
+    lines.append("")
+    lines.append("Required JSON shape:")
+    lines.append(json.dumps(_json_example(profile), ensure_ascii=False, indent=2))
+    lines.append("")
+    lines.append("OCR text:")
+    lines.append(ocr_text)
+    return "\n".join(lines)
+
+
+def _extract_response_text(response: Any) -> str:
+    content = getattr(response, "output_text", None)
+    if content:
+        return str(content)
+
+    texts = []
+    for item in getattr(response, "output", []) or []:
+        for content_item in getattr(item, "content", []) or []:
+            text_obj = getattr(content_item, "text", None)
+            if text_obj:
+                if hasattr(text_obj, "value"):
+                    texts.append(str(text_obj.value))
+                else:
+                    texts.append(str(text_obj))
+    return "\n".join(texts)
+
+
+def _clean_json_text(content: str) -> str:
+    text = (content or "").strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+    return text.strip()
+
+
+def _normalize_employment_records(value: Any, object_fields: List[str]) -> List[Dict[str, str]]:
+    if not isinstance(value, list):
+        return []
+
+    records = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        normalized = {}
+        for field in object_fields:
+            raw = item.get(field, "")
+            normalized[field] = "" if raw is None else str(raw).strip()
+        records.append(normalized)
+    return records
+
+
+def _apply_category_map(result: Dict[str, Any], extraction: Dict[str, Any]) -> None:
+    category_map = extraction.get("category_map", {}) or {}
+    category_field = extraction.get("category_field", "category")
+    raw = result.get(category_field)
+    if raw is None or not category_map:
+        return
+
+    normalized_map = {str(k).strip().upper(): v for k, v in category_map.items()}
+    mapped = normalized_map.get(str(raw).strip().upper())
+    if mapped is not None:
+        result[category_field] = mapped
+
+
+def _build_full_name(result: Dict[str, Any], extraction: Dict[str, Any]) -> None:
+    full_name = extraction.get("full_name") or {}
+    if not full_name:
+        return
+
+    target = full_name.get("target", "full_name")
+    parts = full_name.get("parts", []) or []
+    separator = str(full_name.get("separator", " "))
+    preserve_empty = bool(full_name.get("preserve_empty_parts", False))
+
+    values = [str(result.get(part, "") or "").strip() for part in parts]
+    if not any(values):
+        result[target] = ""
+        return
+    if not preserve_empty:
+        values = [value for value in values if value]
+    result[target] = separator.join(values)
+
+
+def _postprocess_result(result: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, Any]:
+    extraction = profile.get("extraction", {}) or {}
+    cleaned: Dict[str, Any] = {}
+
+    for field in extraction.get("fields", []) or []:
+        key = field.get("key")
+        if not key:
+            continue
+        raw = result.get(key, "")
+        cleaned[key] = "" if raw is None else str(raw).strip()
+
+    employment = extraction.get("employment", {}) or {}
+    if employment.get("enabled", False):
+        key = employment.get("key", "employment_history")
+        object_fields = employment.get("object_fields") or ["country", "start_date", "end_date"]
+        cleaned[key] = _normalize_employment_records(result.get(key, []), object_fields)
+
+    _apply_category_map(cleaned, extraction)
+    _build_full_name(cleaned, extraction)
+    return cleaned
+
+
+def extract_fields_with_gpt(ocr_text, api_key, profile, model="gpt-5-mini"):
+    if not (ocr_text or "").strip():
+        print("⚠️ OCR結果が空だったため、GPTによる抽出をスキップします。")
+        return _empty_result(profile)
 
     client = OpenAI(api_key=api_key)
+    prompt = _build_prompt(ocr_text, profile)
 
-    if not ocr_text.strip():
-        print("⚠️ OCR結果が空だったため、GPTによる抽出をスキップします。")
-        return {
-            "Full Name": "",
-            "Date of Birth": "",
-            "Place of Birth": "",
-            "Present Address": "",
-            "Passport Number": "",
-            "Valid Until": "",
-            "Category": "",
-            "Japan Work Periods": "",
-            "Japan Entry Count": 0,
-            "Japan Work Period Start": "",
-            "Japan Work Period End": "",
-            "Philippines Work Periods": ""
-        }
-
-    prompt = f"""
-次のBIO DATA形式のテキストから、以下の項目を抽出してください。
-
-必須で抽出する項目：
-- Surname（姓の欄に記載されているもの）
-- Given Names（given names欄に記載されている名前すべて）
-- Middle Name（ミドルネーム欄に記載されているもの）
-- Date of Birth
-- Place of Birth
-- Present Address
-- Passport Number
-- Valid Until
-- Category（"DANCER"の場合は「舞踏」、"SINGER"の場合は「歌謡」と日本語に翻訳してください。それ以外は原文のまま。）
-
-Employment Records 等に記載されている全ての職歴について、勤務期間を抽出し、次のルールで分類してください。
-
-1) 日本での経歴（Japan Work Periods）
-- 日本国内での勤務と判断できるものを対象とします（住所に "JAPAN" や日本の都道府県名、都市名が含まれる場合など）。
-- 該当する全ての勤務期間を、古い順から新しい順に並べて列挙してください。
-- 各行には "APRIL 19, 2025 TO JULY 19, 2025" のように期間だけを書いてください（店名などは含めないでください）。
-- それらを1行に1件ずつ、改行区切りの1つの文字列として "Japan Work Periods" に入れてください。
-- 日本での経歴が1件も無い場合は "Japan Work Periods" を「なし」としてください。
-- "Japan Entry Count"、"Japan Work Period Start"、"Japan Work Period End" はプログラム側で設定するので、ここでは "Japan Entry Count": 0、"Japan Work Period Start": ""、"Japan Work Period End": "" としてください。
-
-2) フィリピンでの経歴（Philippines Work Periods）
-- 上記の日本以外の全ての経歴を対象とします（フィリピン国内の経歴を想定）。
-- 各経歴から勤務期間（"〜 TO 〜" 形式の日付部分）だけを抜き出してください。
-- それらを古い順から新しい順に並べ、1行に1件ずつ、改行区切りの1つの文字列として "Philippines Work Periods" に入れてください。
-- フィリピンでの経歴が1件も無い場合は「なし」としてください。
-
-注意事項：
-- 日付の書式は、入力に使われている英語表記（例: "MAY 8, 2016" や "July 3, 2024"）を維持してください。
-- OCR特有の誤認（0とO, 1とI, 8とBなど）は文脈に応じて補正してください。
-- 出力は説明文などを一切含めず、有効なJSONオブジェクトのみを返してください。
-- コードブロック（```json や ```）も絶対に出力しないでください。
-
-最後に、"Surname  First Name  Middle Name" の順で2スペースずつ区切った "Full Name" を必ず追加してください。
-Middle Name が記載されていない場合でも、空白文字列を使って "Surname  First Name  " のように2スペースを維持してください。
-
-出力形式（JSON形式）：
-{{
-  "Full Name": "...",
-  "Date of Birth": "...",
-  "Place of Birth": "...",
-  "Present Address": "...",
-  "Passport Number": "...",
-  "Valid Until": "...",
-  "Category": "...",
-  "Japan Work Periods": "...",
-  "Japan Entry Count": 0,
-  "Japan Work Period Start": "",
-  "Japan Work Period End": "",
-  "Philippines Work Periods": "..."
-}}
-
-テキスト：
-{ocr_text}
-"""
+    system_prompt = (
+        profile.get("extraction", {}).get("system_prompt")
+        or "You extract structured data from documents accurately. Return only valid JSON."
+    )
 
     try:
         response = client.responses.create(
             model=model,
             input=[
-                {
-                    "role": "system",
-                    "content": "あなたは文書から正確に情報を抽出するアシスタントです。出力は常に有効なJSONだけを返してください。"
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                },
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
             ],
         )
 
-        content = getattr(response, "output_text", None)
-
-        if not content:
-            texts = []
-            for item in getattr(response, "output", []):
-                for c in getattr(item, "content", []):
-                    text_obj = getattr(c, "text", None)
-                    if text_obj:
-                        if hasattr(text_obj, "value"):
-                            texts.append(text_obj.value)
-                        else:
-                            texts.append(str(text_obj))
-            content = "\n".join(texts)
-
-        if not content or not content.strip():
+        content = _extract_response_text(response)
+        if not content.strip():
             print("⚠️ GPT応答が空でした。")
             return {}
 
-        text = content.strip()
-        if text.startswith("```"):
-            text = re.sub(r"^```(?:json)?\s*", "", text)
-            text = re.sub(r"```$", "", text.strip())
+        parsed = json.loads(_clean_json_text(content))
+        if not isinstance(parsed, dict):
+            raise ValueError("GPT output JSON was not an object.")
 
-        return json.loads(text)
+        return _postprocess_result(parsed, profile)
 
     except Exception as e:
         print("❌ GPT出力のJSON変換またはAPI呼び出しに失敗:", e)
