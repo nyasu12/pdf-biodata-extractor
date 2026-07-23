@@ -1,44 +1,50 @@
+#define MyAppName "PDF BioData Extractor"
+#define MyAppVersion "3.00"
+#define MyAppPublisher "PDF BioData Extractor"
+
+#ifndef ExeSource
+  #define ExeSource "dist\godmode.exe"
+#endif
+#ifndef ProfilesSource
+  #define ProfilesSource "profiles\*"
+#endif
+#ifndef PopplerBinSource
+  #define PopplerBinSource "vendor\poppler\Library\bin\*"
+#endif
+#ifndef InstallerOutputDir
+  #define InstallerOutputDir "installer_output"
+#endif
+
 [Setup]
-AppName=PDF BioData Extractor
-AppVersion=2.00
-AppPublisher=Shota Shimaki
-DefaultDirName={autopf64}\GodmodePyInstaller
-DefaultGroupName=GodmodePyInstaller
-OutputDir=C:\InstallerOutput
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+DefaultDirName={autopf64}\PDFBioDataExtractor
+DefaultGroupName={#MyAppName}
+OutputDir={#InstallerOutputDir}
 OutputBaseFilename=PDFBioDataExtractorSetup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 Uninstallable=yes
-UninstallDisplayName=PDF BioData Extractor Uninstaller
+UninstallDisplayName={#MyAppName} Uninstaller
 UninstallFilesDir={app}
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Files]
-Source: "C:\InstallerFiles\poppler-24.08.0\Library\bin\*"; DestDir: "C:\Program Files\Poppler\bin"; Flags: recursesubdirs createallsubdirs
-Source: "C:\InstallerFiles\dist\godmode.exe"; DestDir: "{app}"
+Source: "{#ExeSource}"; DestDir: "{app}"
+Source: "{#ProfilesSource}"; DestDir: "{app}\profiles"; Flags: recursesubdirs createallsubdirs
+Source: "{#PopplerBinSource}"; DestDir: "{app}\poppler\bin"; Flags: recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{app}\Credentials"; Flags: uninsneveruninstall
 Name: "C:\temp\GodmodePy\bio_data"; Flags: uninsneveruninstall
 Name: "C:\temp\GodmodePy\output"; Flags: uninsneveruninstall
 Name: "C:\temp\GodmodePy\output\debug"; Flags: uninsneveruninstall
-Name: "C:\Program Files\Poppler"; Flags: uninsneveruninstall
-Name: "C:\Program Files\Poppler\bin"; Flags: uninsneveruninstall
 
 [Icons]
-Name: "{autodesktop}\Credentials - Shortcut"; Filename: "{app}\Credentials"
-Name: "{autodesktop}\bio_data - Shortcut"; Filename: "C:\temp\GodmodePy\bio_data"
-
-[Run]
-Filename: "cmd.exe"; Parameters: "/c setx PATH ""C:\Program Files\Poppler\bin;%PATH%"" /M"; Flags: runhidden waituntilterminated
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}\Credentials"
-Type: filesandordirs; Name: "C:\temp\GodmodePy"
-Type: filesandordirs; Name: "C:\Program Files\Poppler"
-Type: files; Name: "{autodesktop}\Credentials - Shortcut.lnk"
-Type: files; Name: "{autodesktop}\bio_data - Shortcut.lnk"
+Name: "{autodesktop}\PDF BioData Credentials"; Filename: "{app}\Credentials"
+Name: "{autodesktop}\PDF BioData Input"; Filename: "C:\temp\GodmodePy\bio_data"
 
 [Code]
 function InitializeSetup(): Boolean;
@@ -50,7 +56,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    MsgBox('Installation completed. Place your API keys inside the Credentials folder.', mbInformation, MB_OK);
+    MsgBox('Installation completed. Place config.json and Google Vision credentials inside the Credentials folder.', mbInformation, MB_OK);
   end;
 end;
 
