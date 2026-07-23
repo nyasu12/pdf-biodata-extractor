@@ -1,0 +1,6 @@
+openai
+google-cloud-vision
+pdf2image
+Pillow
+pandas
+openpyxl
