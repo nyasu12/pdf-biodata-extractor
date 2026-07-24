@@ -88,7 +88,7 @@ def scan_text(path: Path, text: str) -> list[str]:
         if not is_placeholder(value):
             findings.append(f"{rel}: {match.group(1)} contains a non-placeholder value")
 
-    if re.search(r'"private_key"\s*:\s*"-----BEGIN PRIVATE KEY-----', text, re.I):
+    if re.search(r'"private_key"\s*:\s*"-----BEGIN\s+PRIVATE\s+KEY-----', text, re.I):
         findings.append(f"{rel}: possible embedded Google service-account private key")
 
     if re.search(r'"client_email"\s*:\s*"[^"@]+@[^"@]+\.iam\.gserviceaccount\.com"', text, re.I):
