@@ -2,9 +2,27 @@
 **/*.py[cod]
 **/*.log
 
-**/Credentials/config.json
-**/Credentials/vision-api-key.json
+# Local environment and credential files
+.env
+.env.*
+!.env.example
+**/Credentials/
+**/credentials/
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*service-account*.json
+**/*service_account*.json
 
+# Source documents and generated spreadsheets may contain personal data
+**/*.pdf
+**/*.xls
+**/*.xlsx
+**/*.xlsm
+**/*.xlsb
+
+# Build/runtime output
 pdf-biodata-extractor/build/
 pdf-biodata-extractor/dist/
 pdf-biodata-extractor/installer_output/
