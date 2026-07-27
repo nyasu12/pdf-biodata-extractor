@@ -2,77 +2,56 @@
 
 [![Tests](https://github.com/nyasu12/pdf-biodata-extractor/actions/workflows/tests.yml/badge.svg)](https://github.com/nyasu12/pdf-biodata-extractor/actions/workflows/tests.yml)
 
-PDF BioData Extractor converts scanned biodata/resume-style PDFs into structured Excel data using Google Cloud Vision OCR and OpenAI.
+PDF BioData Extractor is a profile-driven scanned-document extraction pipeline built with Google Cloud Vision OCR and OpenAI.
 
-The project is profile-driven: document detection rules, extracted fields, category mappings, employment handling, and Excel columns can be changed without editing the Python modules.
+It converts semi-structured PDF documents such as biodata sheets and resume-style forms into configurable Excel output. Document detection rules, extracted fields, category mappings, employment handling, OCR settings, and Excel columns are defined by profiles instead of being hard-coded into the Python modules.
 
-## Support status
+The repository keeps a compatibility profile for the original workflow, but new users can start from the country-neutral generic profile or create their own profile without rewriting the extraction pipeline.
 
-| Profile | Status | Intended use |
+## Key capabilities
+
+- OCR for scanned PDFs using Google Cloud Vision
+- structured field extraction with OpenAI
+- configurable page/person detection
+- profile-defined extraction fields and instructions
+- structured employment-history handling
+- configurable Excel columns and repeatable sections
+- command-line overrides for input, output, model, profile, and OCR settings
+- fictional example data for safe inspection of the data flow
+- regression tests for generic and compatibility behavior
+- automated public-repository safety checks for common secrets and sensitive artifacts
+
+## Profiles at a glance
+
+| Profile | Role | Intended use |
 | --- | --- | --- |
-| `entertainer_jp` | Primary / regression-tested | Existing Philippines-to-Japan entertainer biodata workflow |
-| `generic_biodata` | Starter / reference profile | General biodata and resume-style documents |
-| Custom profile | Configurable | User-defined document markers, extraction fields, employment rules, and Excel layout |
+| `generic_biodata` | Recommended starting point | Country-neutral biodata and resume-style documents |
+| Custom profile | Extensible | User-defined document markers, extraction fields, employment rules, mappings, and Excel layout |
+| `entertainer_jp` | Compatibility / regression-tested | Original Philippines-to-Japan entertainer biodata workflow |
 
-`generic_biodata` is intentionally provided as a starting point rather than a claim that every biodata or resume layout will work without adjustment. Documents with different headings, fields, languages, or employment formats may require a custom profile.
+`generic_biodata` is a starter profile, not a claim that every document layout works without adjustment. Documents with different headings, fields, languages, tables, or employment formats may require a custom profile.
 
-## Default behavior and backward compatibility
+The default profile remains `entertainer_jp` for backward compatibility with existing installations.
 
-The default profile is `pdf-biodata-extractor/profiles/entertainer_jp.json`. It preserves the repository's existing Philippines-to-Japan entertainer workflow:
+## Quick start for a new project
 
-- surname / given names / middle name extraction
-- birth, address, passport, validity, and category extraction
-- `DANCER` -> `舞踏`
-- `SINGER` -> `歌謡`
-- Japan employment count and latest Japan work period
-- non-Japan employment exported to the existing Philippines work-period columns
-- multiple-person PDF splitting using biodata page markers
+Enter the source directory and install the runtime dependencies:
 
-An existing `Credentials/config.json` containing only `OPENAI_API_KEY` continues to select this profile automatically.
-
-## Architecture
-
-```text
-repository-root/
-├── .github/
-│   └── workflows/
-│       └── tests.yml
-├── README.md
-├── LICENSE
-└── pdf-biodata-extractor/
-    ├── godmode.py
-    ├── godmode_install.iss
-    ├── config.example.json
-    ├── requirements.txt
-    ├── requirements-dev.txt
-    ├── examples/
-    │   ├── sample_generic_input.txt
-    │   ├── sample_generic_result.json
-    │   └── sample_generic_output.csv
-    ├── profiles/
-    │   ├── entertainer_jp.json
-    │   └── generic_biodata.json
-    ├── tests/
-    │   ├── test_document_detector.py
-    │   ├── test_excel_output.py
-    │   ├── test_gpt_postprocess.py
-    │   └── test_profiles.py
-    └── modules/
-        ├── config_loader.py
-        ├── document_detector.py
-        ├── excel_module.py
-        ├── gpt_module.py
-        └── ocr_module.py
+```bash
+cd pdf-biodata-extractor
+pip install -r requirements.txt
 ```
 
-### Responsibilities
+Configure your Google Cloud Vision credentials and OpenAI API key, then run the generic profile:
 
-- `config_loader.py` — runtime paths, credentials, profile loading, OCR/model settings
-- `document_detector.py` — configurable person/page-start detection
-- `ocr_module.py` — Google Vision OCR and configurable image preprocessing
-- `gpt_module.py` — profile-driven prompt generation and structured JSON extraction
-- `excel_module.py` — profile-driven Excel schema, date formatting, and repeatable employment columns
-- `godmode.py` — CLI and processing pipeline
+```bash
+python godmode.py \
+  --profile generic_biodata \
+  --input ./sample_pdfs \
+  --output ./results/output.xlsx
+```
+
+For a different document type, copy one of the files in `profiles/`, adjust the JSON configuration, and pass the new profile with `--profile`.
 
 ## Requirements
 
@@ -80,13 +59,6 @@ repository-root/
 - Google Cloud Vision credentials
 - OpenAI API key
 - Poppler for PDF rendering
-
-Enter the source directory and install Python dependencies:
-
-```bash
-cd pdf-biodata-extractor
-pip install -r requirements.txt
-```
 
 `requirements.txt` uses supported version ranges instead of completely unbounded dependencies so normal updates are allowed while future major-version breaking changes are not pulled in automatically.
 
@@ -123,6 +95,54 @@ The following can also be used:
 - `BIODATA_CONFIG`
 - `BIODATA_PROFILE`
 
+## Architecture
+
+```text
+repository-root/
+├── .github/
+│   └── workflows/
+│       └── tests.yml
+├── scripts/
+│   └── check_public_safety.py
+├── README.md
+├── LICENSE
+└── pdf-biodata-extractor/
+    ├── godmode.py
+    ├── godmode_install.iss
+    ├── config.example.json
+    ├── requirements.txt
+    ├── requirements-dev.txt
+    ├── examples/
+    │   ├── sample_generic_input.txt
+    │   ├── sample_generic_result.json
+    │   └── sample_generic_output.csv
+    ├── profiles/
+    │   ├── entertainer_jp.json
+    │   └── generic_biodata.json
+    ├── tests/
+    │   ├── test_document_detector.py
+    │   ├── test_excel_output.py
+    │   ├── test_gpt_postprocess.py
+    │   └── test_profiles.py
+    └── modules/
+        ├── config_loader.py
+        ├── document_detector.py
+        ├── excel_module.py
+        ├── gpt_module.py
+        └── ocr_module.py
+```
+
+### Responsibilities
+
+- `config_loader.py` — runtime paths, credentials, profile loading, OCR/model settings
+- `document_detector.py` — configurable person/page-start detection
+- `ocr_module.py` — Google Vision OCR and configurable image preprocessing
+- `gpt_module.py` — profile-driven prompt generation and structured JSON extraction
+- `excel_module.py` — profile-driven Excel schema, date formatting, and repeatable employment columns
+- `godmode.py` — CLI and processing pipeline
+- `scripts/check_public_safety.py` — repository-level checks for common secrets, credential artifacts, and sensitive tracked file types
+- `.github/workflows/tests.yml` — public-safety validation followed by the Python test matrix
+
 ## Runtime paths
 
 For backward compatibility, Windows defaults to:
@@ -151,13 +171,9 @@ Relative paths in `config.json` are resolved from their logical parent directory
 
 ## Profiles
 
-### `entertainer_jp`
-
-Optimized for the original entertainer biodata workflow and selected by default. The automated regression tests preserve the existing Excel output contract, including Japan entry count/latest work period, dynamic Philippines work-period columns, category mapping, name formatting, and date normalization.
-
 ### `generic_biodata`
 
-A country-neutral starter/reference profile that extracts:
+The recommended starting point for new integrations is the country-neutral generic profile. It extracts:
 
 - full name
 - date/place of birth
@@ -173,7 +189,29 @@ Use it with:
 python godmode.py --profile generic_biodata
 ```
 
-### Fictional example
+### Custom profiles
+
+A custom profile can redefine document-start markers, extraction fields, instructions, mappings, employment rules, OCR behavior, and Excel output without editing the core Python modules.
+
+This is the main extension point for adapting the pipeline to another document layout or business workflow.
+
+### `entertainer_jp`
+
+`entertainer_jp` preserves the repository's original Philippines-to-Japan entertainer workflow and remains the default for backward compatibility.
+
+Its regression-tested behavior includes:
+
+- surname / given names / middle name extraction
+- birth, address, passport, validity, and category extraction
+- `DANCER` -> `舞踏`
+- `SINGER` -> `歌謡`
+- Japan employment count and latest Japan work period
+- non-Japan employment exported to the existing Philippines work-period columns
+- multiple-person PDF splitting using biodata page markers
+
+An existing `Credentials/config.json` containing only `OPENAI_API_KEY` continues to select this profile automatically.
+
+## Fictional example
 
 The `pdf-biodata-extractor/examples/` directory contains a completely fictional example so the data flow can be inspected without exposing real personal information:
 
@@ -191,7 +229,7 @@ The CSV is a human-readable preview of the columns that the generic profile writ
 
 Copy one of the files in `profiles/` and edit the JSON.
 
-A profile controls three major areas:
+A profile controls three major areas.
 
 ### 1. Page/person detection
 
@@ -285,7 +323,7 @@ OCR preprocessing can be changed without editing Python:
 }
 ```
 
-The original defaults are preserved.
+The original defaults are preserved for compatibility.
 
 ## Command-line overrides
 
@@ -361,9 +399,9 @@ pyinstaller --onefile --name godmode godmode.py
 
 Keep the `profiles` directory beside `godmode.exe`, or include/copy it as part of your packaging workflow. The provided Inno Setup script copies `profiles/` beside the installed executable.
 
-## Testing
+## Testing and public-repository safety
 
-The test suite does not require real OpenAI or Google Cloud credentials. It tests local behavior including:
+The test suite does not require real OpenAI or Google Cloud credentials. It validates local behavior including:
 
 - bundled profile structure
 - country-neutral generic profile behavior
@@ -385,7 +423,15 @@ pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-GitHub Actions runs the same suite on Python 3.10 and Python 3.13 for pull requests and pushes to `main` that affect the project.
+The repository also includes a public-safety scanner:
+
+```bash
+python3 scripts/check_public_safety.py
+```
+
+It inspects Git-tracked files for common API-key/token patterns, private keys, credential directories, local environment files, Google service-account indicators, and sensitive tracked file types such as PDFs and Excel workbooks. The scanner is intentionally conservative and is not a substitute for dedicated secret-management or security-review tooling.
+
+GitHub Actions runs the public-safety check first. The Python 3.10 and Python 3.13 test jobs run only after that check passes. The workflow runs for pushes to `main` and for pull-request updates so repository-wide safety checks are not skipped just because a change is outside the Python source directory.
 
 ## Date normalization
 
@@ -399,19 +445,22 @@ The original source text is kept during extraction and normalized only when an E
 
 ## Limitations
 
-- `generic_biodata` is a starter/reference profile, not a guarantee of compatibility with every biodata, resume, or application form.
+- `generic_biodata` is a starter profile, not a guarantee of compatibility with every biodata, resume, application form, or document layout.
 - OCR accuracy depends on scan resolution, contrast, orientation, handwriting, compression, and source-document quality.
 - Documents with substantially different headings, languages, table structures, or employment-history formats may need profile adjustments.
 - OpenAI extraction is probabilistic. Review extracted data before using it for decisions, records, or other workflows where mistakes matter.
-- The automated tests validate the local parsing, profile, postprocessing, and Excel-output layers; they do not make live Google Cloud Vision or OpenAI API calls.
-- The `entertainer_jp` profile is the compatibility-focused profile for the original workflow and is more specifically tuned than `generic_biodata`.
+- The automated tests validate local parsing, profile, postprocessing, and Excel-output layers; they do not make live Google Cloud Vision or OpenAI API calls.
+- The `entertainer_jp` profile is compatibility-focused and more specifically tuned than `generic_biodata`.
 
-## Security
+## Security and data handling
 
 - Never commit `Credentials/config.json` with a real API key.
-- Never commit `Credentials/vision-api-key.json`.
-- Environment variables may be used instead of credential files.
+- Never commit `Credentials/vision-api-key.json` or other service-account credentials.
+- Prefer environment variables or an external secret store for production credentials.
+- Run `python3 scripts/check_public_safety.py` before publishing changes when working outside GitHub Actions.
+- The safety scanner reduces the chance of accidental publication but cannot detect every possible secret or sensitive value.
 - If a credential is accidentally published, revoke/rotate it rather than only deleting it from Git history.
+- Scanned documents may contain personal or sensitive data. Live processing sends document content to the configured cloud OCR and language-model services, so confirm your privacy, retention, and organizational data-handling requirements before processing real documents.
 
 ## License
 
