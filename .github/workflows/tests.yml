@@ -3,18 +3,8 @@ name: Tests
 on:
   push:
     branches: [main]
-    paths:
-      - "pdf-biodata-extractor/**"
-      - "scripts/**"
-      - ".gitignore"
-      - ".github/workflows/tests.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "pdf-biodata-extractor/**"
-      - "scripts/**"
-      - ".gitignore"
-      - ".github/workflows/tests.yml"
 
 permissions:
   contents: read
